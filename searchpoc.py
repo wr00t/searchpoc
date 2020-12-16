@@ -14,9 +14,11 @@ Refer to the git repo.
 
 # Built-in
 import json
+import re
 
 # External
 from youtubesearchpython import SearchVideos
+import requests
 
 #######################################################################
 
@@ -41,7 +43,10 @@ def search_youtube(cve):
     return to_return
 
 def search_exploitdb(cve):
-    return
+    cve = cve.removeprefix("CVE-")
+    search = requests.get(f"https://www.exploit-db.com/search?cve={cve}")
+    # pylint: disable=anomalous-backslash-in-string
+    return re.findall("/exploits/[0-9]{1,6}", search.text)
 
 def search_cvebase(cve):
     return
@@ -52,13 +57,27 @@ def search_github(cve):
 #######################################################################
 
 def main():
+
+    # TODO: argument parsing 
+
+    # Get youtube results
     yt = search_youtube("test")
-    print_results("TEST-YT", yt)
+    if len(yt) != 0:
+        print_results("FROM YOUTUBE (https://www.youtube.com/)", yt)
+    
+    # Get exploitdb results
+    ed = search_exploitdb("CVE-2020-6418")
+    if len(ed) != 0:
+        print_results("FROM EXPLOITDB (https://www.exploit-db.com/)", ed)
+
+    # TODO: get cvebase results
+
+    # TODO: get github results
+
     return
 
 #######################################################################
 
 if __name__ == "__main__":
     main()
-
 
