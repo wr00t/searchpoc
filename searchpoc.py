@@ -15,10 +15,16 @@ Refer to the git repo.
 # Built-in
 import json
 import re
+import os
 
 # External
 from youtubesearchpython import SearchVideos
 import requests
+import selenium
+from selenium import webdriver  
+from selenium.webdriver.common.keys import Keys  
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By 
 
 #######################################################################
 
@@ -33,6 +39,16 @@ def print_results(header, msg_lst):
     for msg in msg_lst:
         print_result(msg)
 
+def get_webdriver(url):
+    try:
+        browser = webdriver.Firefox() 
+        browser.get(url)
+        return browser
+    except (Exception):
+        pass
+
+    return None
+
 def search_youtube(cve):
     to_return = []
     search = SearchVideos(f'intitle:"{cve}" + "poc"', offset = 1, mode = "json", max_results = 3)
@@ -43,10 +59,12 @@ def search_youtube(cve):
     return to_return
 
 def search_exploitdb(cve):
-    cve = cve.removeprefix("CVE-")
-    search = requests.get(f"https://www.exploit-db.com/search?cve={cve}")
+    cve = re.sub("CVE-", "", cve)
+    page = get_webdriver(f"https://www.exploit-db.com/search?cve={cve}")
+    page.find_elements(By.TAG_NAME, 'tbody')
+    exit(0)
     # pylint: disable=anomalous-backslash-in-string
-    return re.findall("/exploits/[0-9]{1,6}", search.text)
+    return [] # re.findall("CVE", search.text)
 
 def search_cvebase(cve):
     return
@@ -61,7 +79,7 @@ def main():
     # TODO: argument parsing 
 
     # Get youtube results
-    yt = search_youtube("test")
+    yt = [] # search_youtube("test")
     if len(yt) != 0:
         print_results("FROM YOUTUBE (https://www.youtube.com/)", yt)
     
