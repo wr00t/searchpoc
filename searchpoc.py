@@ -26,10 +26,19 @@ def print_result(msg):
 def print_header(msg):
     print(f"[+] {msg}")
 
-def search_youtube(cve):
-    search = SearchPlaylists(f'intitle:"{cve}" intitle:"poc"', offset = 1, mode = "json", max_results = 5)
+def print_results(header, msg_lst):
+    print_header(header)
+    for msg in msg_lst:
+        print_result(msg)
 
-    return
+def search_youtube(cve):
+    to_return = []
+    search = SearchVideos(f'intitle:"{cve}" + "poc"', offset = 1, mode = "json", max_results = 3)
+    jresults = json.loads(search.result())
+    for res in jresults["search_result"]:
+        link = res["link"]
+        to_return.append(link)
+    return to_return
 
 def search_exploitdb(cve):
     return
@@ -43,7 +52,8 @@ def search_github(cve):
 #######################################################################
 
 def main():
-    
+    yt = search_youtube("test")
+    print_results("TEST-YT", yt)
     return
 
 #######################################################################
