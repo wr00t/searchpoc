@@ -25,8 +25,11 @@ from youtubesearchpython import SearchVideos
 #######################################################################
 
 DEF_EXPDB_CSV_LOC = "files_exploits.txt"
-EXPLOIT_BASEURL = "https://www.exploit-db.com/exploits"
+EXPLOIT_BASEURL = "https://www.exploit-db.com/exploits/{}"
 EXPLOITDB_URL_CSV = "https://raw.githubusercontent.com/offensive-security/exploitdb/master/files_exploits.csv"
+CVEBASE_URL = "https://raw.githubusercontent.com/cvebase/cvebase.com/main/cve/{}/{}/{}.md"
+GITHUB_API_Q = "https://api.github.com/search/repositories?q={}&page=1"
+GITHUB_API_H = "application/vnd.github.v3+json"
 
 #######################################################################
 
@@ -67,8 +70,9 @@ def check_exploitdb_csv(to_write):
             firstline = False
             continue
         fields = line.split(b",")
-        exdbid = fields[0].decode("utf-8") 
-        exploithtml = urllib.request.urlopen(f"{EXPLOIT_BASEURL}/{exdbid}").read().decode("utf-8") 
+        exdbid = fields[0].decode("utf-8")
+        url = EXPLOIT_BASEURL.format(exdbid)
+        exploithtml = urllib.request.urlopen(url).read().decode("utf-8") 
         # pylint: disable=anomalous-backslash-in-string
         cvenum = ",".join(list(set(re.findall("CVE-\d{4}-\d{2}",exploithtml))))
         fp.write(f"{cvenum}:{exdbid}\n")
@@ -81,14 +85,38 @@ def search_exploitdb(cve, dbfile):
         for line in customdb.readlines():
             if re.match(cve, line):
                 exdbid = line.split(":")[0]
-                links.append(f"{EXPLOIT_BASEURL}/{exdbid}")
+                to_append = EXPLOIT_BASEURL.format(exdbid)
+                links.append(to_append)
     return links
 
 def search_cvebase(cve):
-    return
+    # Notation of raw page on github is: 
+    # https://<url>/cvebase/cvebase.com/main/cve/2000/1xxx/CVE-2000-1209.md
+    # So from cve (CVE-1234-5678) we have to take 5xxx
+    folder = f"{cve[9]}xxx"
+    year = f"{cve[4:8]}"
+    url = CVEBASE_URL.format(year, folder, cve)
+    try:
+        response = urllib.request.urlopen(url)
+    except urllib.error.HTTPError:
+        return []
+    html = response.read().decode("utf-8")
+    return re.findall(r'(https?://[^\s]+)', html)
 
+# Using GH APIs https://docs.github.com/en/free-pro-team@latest/rest/reference/search
 def search_github(cve):
-    return
+    url = GITHUB_API_Q.format(cve)
+    try:
+        response = urllib.request.urlopen(url)
+    except urllib.error.HTTPError:
+        return []
+    ghresp = json.loads(response.read().decode("utf-8"))
+    if ghresp["total_count"] == 0:
+        return []
+    to_return = []
+    for item in ghresp["items"]:
+        to_return.append(item["html_url"])
+    return to_return
 
 #######################################################################
 
@@ -101,16 +129,21 @@ def main():
     if len(yt) != 0:
         print_results("FROM YOUTUBE (https://www.youtube.com/)", yt)
     
+    # TODO: find better solution
     # Get exploitdb results
-    exploitdbcsv = DEF_EXPDB_CSV_LOC
-    check_exploitdb_csv(os.path.join(os.getcwd(), exploitdbcsv))
-    ed = search_exploitdb("CVE-2020-6418", exploitdbcsv)
-    if len(ed) != 0:
-        print_results("FROM EXPLOITDB (https://www.exploit-db.com/)", ed)
+    # exploitdbcsv = DEF_EXPDB_CSV_LOC
+    # check_exploitdb_csv(os.path.join(os.getcwd(), exploitdbcsv))
+    # ed = search_exploitdb("CVE-2020-6418", exploitdbcsv)
+    # if len(ed) != 0:
+    #     print_results("FROM EXPLOITDB (https://www.exploit-db.com/)", ed)
 
-    # TODO: get cvebase results
+    cb = search_cvebase("CVE-2000-1209")
+    if len(cb) != 0:
+        print_results("FROM CVEBASE (https://www.cvebase.com/)", cb)
 
-    # TODO: get github results
+    gh = search_github("CVE-2000-1350")
+    if len(gh) != 0:
+        print_results("FROM GITHUB (https://github.com/)", gh)
 
     return
 
