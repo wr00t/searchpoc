@@ -41,13 +41,14 @@ GITHUB_API_H = "application/vnd.github.v3+json"
 def message(msg):
     print(f"[+] {msg}")
 
-# Print all results in a list with custom header
-def print_results(header, res_lst):
-    if res_lst == 0:
-        return
-    print("[+][+]", header)
-    for res in res_lst:
-        print(res)
+# Print all results in a all lists
+def print_results(*res_mat):
+    print(f"==={sys.argv[1]}===")
+    for res_lst in res_mat:
+        if len(res_lst) == 0:
+            return
+        for res in res_lst:
+            print(res)
 
 # Search videos regarding the asked cve using some Google style keywords
 def search_youtube(cve):
@@ -124,10 +125,11 @@ def main():
         message("Pass just 1 cve as argument")
         exit(1)
 
-    print(f"==={sys.argv[1]}===")
-    print_results("FROM YOUTUBE (https://www.youtube.com/)", search_youtube(sys.argv[1]))
-    print_results("FROM CVEBASE (https://www.cvebase.com/)", search_cvebase(sys.argv[1]))
-    print_results("FROM GITHUB (https://github.com/)", search_github(sys.argv[1]))
+    print_results(
+        search_youtube(sys.argv[1]), 
+        search_cvebase(sys.argv[1]), 
+        search_github(sys.argv[1])
+        )
     return
 
 #######################################################################
