@@ -43,12 +43,15 @@ def message(msg):
 
 # Print all results in a all lists
 def print_results(*res_mat):
-    print(f"==={sys.argv[1]}===")
+    result = []
     for res_lst in res_mat:
         if len(res_lst) == 0:
-            return
+            continue
         for res in res_lst:
-            print(res)
+            result.append(res)
+    if len(result) == 0 : return
+    str_res = ", ".join(list(set(result)))
+    print(f"{sys.argv[1]}: {str_res}")
 
 # Search videos regarding the asked cve using some Google style keywords
 def search_youtube(cve):
@@ -119,17 +122,22 @@ def search_github(cve):
 
 #######################################################################
 
+# Wrapper for computing the cve
+def run_with(cve):
+    print_results(
+        search_youtube(cve), 
+        search_cvebase(cve), 
+        search_github(cve)
+        )
+
 def main():
 
     if len(sys.argv) != 2:
         message("Pass just 1 cve as argument")
         exit(1)
-
-    print_results(
-        search_youtube(sys.argv[1]), 
-        search_cvebase(sys.argv[1]), 
-        search_github(sys.argv[1])
-        )
+    
+    run_with(sys.argv[1])
+    
     return
 
 #######################################################################
