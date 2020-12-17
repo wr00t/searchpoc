@@ -16,41 +16,34 @@ Refer to the git repo.
 import json
 import re
 import os
+import urllib.request
 
+# TODO: use only built ins
 # External
 from youtubesearchpython import SearchVideos
-import requests
-import selenium
-from selenium import webdriver  
-from selenium.webdriver.common.keys import Keys  
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By 
 
 #######################################################################
 
-def print_result(msg):
-    print(f"==> {msg}")
+DEF_EXPDB_CSV_LOC = "files_exploits.txt"
+EXPLOIT_BASEURL = "https://www.exploit-db.com/exploits"
+EXPLOITDB_URL_CSV = "https://raw.githubusercontent.com/offensive-security/exploitdb/master/files_exploits.csv"
 
-def print_header(msg):
+#######################################################################
+
+# Just a logging function
+def message(msg):
     print(f"[+] {msg}")
 
-def print_results(header, msg_lst):
-    print_header(header)
-    for msg in msg_lst:
-        print_result(msg)
+# Print all results in a list with custom header
+def print_results(header, res_lst):
+    print("[+][+]", header)
+    for res in res_lst:
+        print(res)
 
-def get_webdriver(url):
-    try:
-        browser = webdriver.Firefox() 
-        browser.get(url)
-        return browser
-    except (Exception):
-        pass
-
-    return None
-
+# Search videos regarding the asked cve using some Google style keywords
 def search_youtube(cve):
     to_return = []
+    # https://pypi.org/project/youtube-search-python/
     search = SearchVideos(f'intitle:"{cve}" + "poc"', offset = 1, mode = "json", max_results = 3)
     jresults = json.loads(search.result())
     for res in jresults["search_result"]:
@@ -58,13 +51,38 @@ def search_youtube(cve):
         to_return.append(link)
     return to_return
 
-def search_exploitdb(cve):
-    cve = re.sub("CVE-", "", cve)
-    page = get_webdriver(f"https://www.exploit-db.com/search?cve={cve}")
-    page.find_elements(By.TAG_NAME, 'tbody')
-    exit(0)
-    # pylint: disable=anomalous-backslash-in-string
-    return [] # re.findall("CVE", search.text)
+# This function does nothing if the file already exist, but writes a custom
+# file with id:cves line by line to put in the current working directory (or where specified)
+def check_exploitdb_csv(to_write):
+    if os.path.exists(to_write):
+        message(f"{to_write} already exist, skipping...")
+        return
+    
+    message("Hang on... This will be long")
+    fp = open(to_write, "a")
+    response = urllib.request.urlopen(EXPLOITDB_URL_CSV)
+    firstline = True
+    for line in response:
+        if firstline:
+            firstline = False
+            continue
+        fields = line.split(b",")
+        exdbid = fields[0].decode("utf-8") 
+        exploithtml = urllib.request.urlopen(f"{EXPLOIT_BASEURL}/{exdbid}").read().decode("utf-8") 
+        # pylint: disable=anomalous-backslash-in-string
+        cvenum = ",".join(list(set(re.findall("CVE-\d{4}-\d{2}",exploithtml))))
+        fp.write(f"{cvenum}:{exdbid}\n")
+    fp.close()
+
+# This will look in a custom file, previously specified, for a match cve -> exploit-link
+def search_exploitdb(cve, dbfile):
+    links = []
+    with open(dbfile, "r") as customdb:
+        for line in customdb.readlines():
+            if re.match(cve, line):
+                exdbid = line.split(":")[0]
+                links.append(f"{EXPLOIT_BASEURL}/{exdbid}")
+    return links
 
 def search_cvebase(cve):
     return
@@ -84,7 +102,9 @@ def main():
         print_results("FROM YOUTUBE (https://www.youtube.com/)", yt)
     
     # Get exploitdb results
-    ed = search_exploitdb("CVE-2020-6418")
+    exploitdbcsv = DEF_EXPDB_CSV_LOC
+    check_exploitdb_csv(os.path.join(os.getcwd(), exploitdbcsv))
+    ed = search_exploitdb("CVE-2020-6418", exploitdbcsv)
     if len(ed) != 0:
         print_results("FROM EXPLOITDB (https://www.exploit-db.com/)", ed)
 
