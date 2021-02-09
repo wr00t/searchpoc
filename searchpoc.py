@@ -88,7 +88,7 @@ def search_youtube(cve):
 # https://<url>/cvebase/cvebase.com/main/cve/2000/1xxx/CVE-2000-1209.md
 # So from cve (CVE-1234-5678) we have to take 5xxx
 def search_cvebase(cve):
-    
+
     # Check for longer numbers (eg: CVE-2019-11111)
     if len(cve) == 13:    
         folder = f"{cve[9]}xxx"
@@ -189,7 +189,7 @@ def search_poc(cve, mode):
         mode = MODES
 
     for m in mode:
-        to_return.append(MODES_TO_FUNC[m](cve))
+        to_return += MODES_TO_FUNC[m](cve)
 
     return to_return
 
@@ -206,17 +206,19 @@ def main():
     if args.file:
         with open(args.file, 'r') as cves:
             for line in cves.readlines():
+                line = line.rstrip('\n')
                 results = search_poc(line, args.mode)
                 if results:
-                    print(f"{line}:") 
+                    print(f"{color.YELLOW}### {line}:{color.END}")
                     for poc in search_poc(line, args.mode):
-                        print(f"[+] {poc}")
+                        print(f"{color.RED}[+]{color.END} {poc}",end=' ')
+                    print()
     else:
         results = search_poc(args.cve, args.mode)
         if results:
-            print(f"{line}:") 
-            for poc in search_poc(line, args.mode):
-                print(f"[+] {poc}")
+            print(f"{color.YELLOW}### {args.cve}:{color.END}") 
+            for poc in search_poc(args.cve, args.mode):
+                print(f"{color.RED}[+]{color.END} {poc}")
 
     return
 
