@@ -21,6 +21,7 @@ import re
 import os
 import urllib.request
 import sys
+import argparse
 from termcolor import colored
 
 
@@ -144,7 +145,22 @@ def banner():
     print(colored(" ___) |  __/ (_| | | | (__| | | | |_) | (_) | (__ ","red"))
     print(colored("|____/ \\___|\\__,_|_|  \\___|_| |_| .__/ \\___/ \\___|","red"))
     print(colored("                                |_| ","red"))
-    print(colored("             - by 5amu (github.com/5amu/searchpoc)", "red"))
+    print(colored("             - by 5amu (github.com/5amu/searchpoc)\n", "red"))
+
+
+# Parse arguments from command line
+def argument_parsing():
+    parser = argparse.ArgumentParser(
+        prog='searchpoc.py',
+        description=f"{banner()}Search PoCs in the wild"
+        )
+    parser.add_argument('-f', '--file', default=None, help='Newline separated cve list in file')
+    """ parser.add_argument('-f', '--file', default=None, help='')
+    parser.add_argument('-f', '--file', default=None, help='Newline separated cve list in file') """
+    parser.add_argument('cve', nargs='+', help='Newline separated cve list in file')
+
+    return parser.parse_args()
+
 
 # Wrapper for computing the cve
 def run_with(cve):
@@ -156,12 +172,10 @@ def run_with(cve):
 
 def main():
 
-    if len(sys.argv) != 2 or "CVE" not in sys.argv[1]:
-        banner()
-        print("\n[+] Usage: searchpoc.py CVE-XXXX-XXXX(X)?")
-        exit(0)
+    args = argument_parsing()
     
-    run_with(sys.argv[1])
+    if args.cve:
+        run_with(args.cve)
     
     return
 
