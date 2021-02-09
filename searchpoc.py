@@ -22,7 +22,19 @@ import os
 import urllib.request
 import sys
 import argparse
-from termcolor import colored
+
+
+class color:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
 
 
 #######################################################################
@@ -32,18 +44,6 @@ GHAPI_QUERY = "https://api.github.com/search/repositories?q={}&page=1"
 YOUTUBE_URL = "https://youtube.com/results?search_query={}"
 
 #######################################################################
-
-# Print all results in a all lists
-def print_results(*res_mat):
-    result = []
-    for res_lst in res_mat:
-        if len(res_lst) == 0:
-            continue
-        for res in res_lst:
-            result.append(res)
-    if len(result) == 0 : return
-    str_res = ", ".join(list(set(result)))
-    print(f"{sys.argv[1]}: {str_res}")
 
 # Search videos regarding the asked cve using some Google style keywords
 # Heavily inspired by https://github.com/joetats/youtube_search
@@ -134,49 +134,90 @@ def search_github(cve):
     to_return = []
     for item in ghresp["items"]:
         to_return.append(item["html_url"])
+
     return to_return
 
 #######################################################################
 
 def banner():
-    print(colored(" ____                      _                      ","red"))
-    print(colored("/ ___|  ___  __ _ _ __ ___| |__  _ __   ___   ___ ","red"))
-    print(colored("\\___ \\ / _ \\/ _` | '__/ __| '_ \\| '_ \\ / _ \\ / __|","red"))
-    print(colored(" ___) |  __/ (_| | | | (__| | | | |_) | (_) | (__ ","red"))
-    print(colored("|____/ \\___|\\__,_|_|  \\___|_| |_| .__/ \\___/ \\___|","red"))
-    print(colored("                                |_| ","red"))
-    print(colored("             - by 5amu (github.com/5amu/searchpoc)\n", "red"))
+    print(f"{color.RED} ____                      _                      ")
+    print(f"{color.RED}/ ___|  ___  __ _ _ __ ___| |__  _ __   ___   ___ ")
+    print(f"{color.RED}\\___ \\ / _ \\/ _` | '__/ __| '_ \\| '_ \\ / _ \\ / __|")
+    print(f"{color.RED} ___) |  __/ (_| | | | (__| | | | |_) | (_) | (__ ")
+    print(f"{color.RED}|____/ \\___|\\__,_|_|  \\___|_| |_| .__/ \\___/ \\___|")
+    print(f"{color.RED}                                |_| ")
+    print(f"{color.RED}             - by 5amu (github.com/5amu/searchpoc){color.END}\n")
 
+
+MODES = ['yt', 'gh', 'cb']
+MODES_TO_FUNC = {
+    'yt' : search_youtube,
+    'gh' : search_github,
+    'cb' : search_cvebase
+}
 
 # Parse arguments from command line
-def argument_parsing():
+def argument_parser():
     parser = argparse.ArgumentParser(
         prog='searchpoc.py',
-        description=f"{banner()}Search PoCs in the wild"
+        description=f"{'' if banner() == None else ''}Search PoCs in the wild"
         )
-    parser.add_argument('-f', '--file', default=None, help='Newline separated cve list in file')
-    """ parser.add_argument('-f', '--file', default=None, help='')
-    parser.add_argument('-f', '--file', default=None, help='Newline separated cve list in file') """
-    parser.add_argument('cve', nargs='+', help='Newline separated cve list in file')
-
-    return parser.parse_args()
-
-
-# Wrapper for computing the cve
-def run_with(cve):
-    print_results(
-        search_youtube(cve), 
-        search_cvebase(cve), 
-        search_github(cve)
+    parser.add_argument('-f', '--file', 
+        metavar='F',
+        default=None, 
+        help='Newline separated cve list in file'
         )
+    parser.add_argument('-m', '--mode',
+        choices=MODES, 
+        nargs='+',
+        default=None,
+        help='Where should the program search? More parameters are allowed, default is all.'
+        )
+    parser.add_argument('cve', 
+        nargs='?',
+        default=None,
+        help='Newline separated cve list in file'
+        )
+
+    return parser
+
+
+def search_poc(cve, mode):
+    to_return = []
+    
+    if not mode:
+        mode = MODES
+
+    for m in mode:
+        to_return.append(MODES_TO_FUNC[m](cve))
+
+    return to_return
+
 
 def main():
 
-    args = argument_parsing()
+    parser = argument_parser()
+    args = parser.parse_args()
     
-    if args.cve:
-        run_with(args.cve)
-    
+    if (not args.cve and not args.file) or (args.cve and args.file):
+        parser.print_help()
+        exit(1)
+
+    if args.file:
+        with open(args.file, 'r') as cves:
+            for line in cves.readlines():
+                results = search_poc(line, args.mode)
+                if results:
+                    print(f"{line}:") 
+                    for poc in search_poc(line, args.mode):
+                        print(f"[+] {poc}")
+    else:
+        results = search_poc(args.cve, args.mode)
+        if results:
+            print(f"{line}:") 
+            for poc in search_poc(line, args.mode):
+                print(f"[+] {poc}")
+
     return
 
 #######################################################################
