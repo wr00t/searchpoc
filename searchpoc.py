@@ -3,7 +3,7 @@
 """
 =======THIS IS OVERLY DOCUMENTED=======
 DESCRIPTION:
-Tool to search on the internet (shodan, youtube, cvebase, github) for 
+Tool to search on the internet (youtube, cvebase, github) for 
 public PoCs, given one or more CVEs in the format of CVE-XXXX-XXXX.
 AUTHOR: 
 Valerio Casalino <casalinovalerio.cv@gmail.com>
@@ -11,11 +11,8 @@ LICENSE:
 Refer to the git repo.
 """
 # TODO:
-#       - Use built in imports only
 #       - Implement a search for exploitdb
-#       - Handle urllib better (exceptions)
 #       - Argument parsing and aking the script usable
-#       - Code style refinements
 
 #######################################################################
 
@@ -26,20 +23,14 @@ import os
 import urllib.request
 import sys
 
-# External
-from youtubesearchpython import SearchVideos
 
 #######################################################################
 
 CVEBASE_URL = "https://raw.githubusercontent.com/cvebase/cvebase.com/main/cve/{}/{}/{}.md"
-GITHUB_API_Q = "https://api.github.com/search/repositories?q={}&page=1"
-GITHUB_API_H = "application/vnd.github.v3+json"
+GHAPI_QUERY = "https://api.github.com/search/repositories?q={}&page=1"
+YOUTUBE_URL = "https://youtube.com/results?search_query={}"
 
 #######################################################################
-
-# Just a logging function
-def message(msg):
-    print(f"[+] {msg}")
 
 # Print all results in a all lists
 def print_results(*res_mat):
@@ -54,19 +45,42 @@ def print_results(*res_mat):
     print(f"{sys.argv[1]}: {str_res}")
 
 # Search videos regarding the asked cve using some Google style keywords
+# Heavily inspired by https://github.com/joetats/youtube_search
 def search_youtube(cve):
-    
-    # https://pypi.org/project/youtube-search-python/
-    # Search results and load them as json objects
-    search = SearchVideos(f'intitle:"{cve}" + "poc"', offset = 1, mode = "json", max_results = 3)
-    jresults = json.loads(search.result())
-    
-    # Extract the links and return them
-    to_return = []
-    for res in jresults["search_result"]:
-        link = res["link"]
-        to_return.append(link)
-    return to_return
+
+    query = urllib.parse.quote(f'intitle:"{cve}" + "poc"')
+    url = YOUTUBE_URL.format(query)
+
+    try:
+        found = False
+        while not found:
+            response = urllib.request.urlopen(url)
+            found = "ytInitialData" in response.read().decode("utf-8")
+    except urllib.error.HTTPError:
+        return []
+
+    results = []
+    start = (
+        response.index("ytInitialData")
+        + len("ytInitialData")
+        + 3
+    )
+    end = response.index("};", start) + 1
+
+    json_str = response[start:end]
+    data = json.loads(json_str)
+
+    for video in data["contents"]["twoColumnSearchResultsRenderer"]["primaryContents"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"]:
+        res = {}
+        if "videoRenderer" in video.keys():
+            video_data = video.get("videoRenderer", {})
+            res = video_data.get("videoId", None)
+            results.append(res)
+
+    for i in range(results):
+        results[i] = f"https://youtube.com/watch?id={results[i]}"
+
+    return results
 
 # Notation of raw page on github is: 
 # https://<url>/cvebase/cvebase.com/main/cve/2000/1xxx/CVE-2000-1209.md
@@ -100,7 +114,7 @@ def search_cvebase(cve):
 def search_github(cve):
     
     # https://api.github.com/search/repositories?q={}&page=1
-    url = GITHUB_API_Q.format(cve)
+    url = GHAPI_QUERY.format(cve)
     
     # Connect, or skip if not HTTP 200
     try:
@@ -133,7 +147,7 @@ def run_with(cve):
 def main():
 
     if len(sys.argv) != 2:
-        message("Pass just 1 cve as argument")
+        print("[+] Pass just 1 cve as argument")
         exit(1)
     
     run_with(sys.argv[1])
