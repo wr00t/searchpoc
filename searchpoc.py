@@ -12,7 +12,6 @@ Refer to the git repo.
 """
 # TODO:
 #       - Implement a search for exploitdb
-#       - Argument parsing and aking the script usable
 
 #######################################################################
 
@@ -22,6 +21,7 @@ import re
 import os
 import urllib.request
 import sys
+from termcolor import colored
 
 
 #######################################################################
@@ -137,6 +137,15 @@ def search_github(cve):
 
 #######################################################################
 
+def banner():
+    print(colored(" ____                      _                      ","red"))
+    print(colored("/ ___|  ___  __ _ _ __ ___| |__  _ __   ___   ___ ","red"))
+    print(colored("\\___ \\ / _ \\/ _` | '__/ __| '_ \\| '_ \\ / _ \\ / __|","red"))
+    print(colored(" ___) |  __/ (_| | | | (__| | | | |_) | (_) | (__ ","red"))
+    print(colored("|____/ \\___|\\__,_|_|  \\___|_| |_| .__/ \\___/ \\___|","red"))
+    print(colored("                                |_| ","red"))
+    print(colored("             - by 5amu (github.com/5amu/searchpoc)", "red"))
+
 # Wrapper for computing the cve
 def run_with(cve):
     print_results(
@@ -147,9 +156,10 @@ def run_with(cve):
 
 def main():
 
-    if len(sys.argv) != 2:
-        print("[+] Pass just 1 cve as argument")
-        exit(1)
+    if len(sys.argv) != 2 or "CVE" not in sys.argv[1]:
+        banner()
+        print("\n[+] Usage: searchpoc.py CVE-XXXX-XXXX(X)?")
+        exit(0)
     
     run_with(sys.argv[1])
     
