@@ -55,7 +55,8 @@ def search_youtube(cve):
         found = False
         while not found:
             response = urllib.request.urlopen(url)
-            found = "ytInitialData" in response.read().decode("utf-8")
+            response = response.read().decode("utf-8")
+            found = "ytInitialData" in response
     except urllib.error.HTTPError:
         return []
 
@@ -77,8 +78,8 @@ def search_youtube(cve):
             res = video_data.get("videoId", None)
             results.append(res)
 
-    for i in range(results):
-        results[i] = f"https://youtube.com/watch?id={results[i]}"
+    for i in range(len(results)):
+        results[i] = f"https://youtube.com/watch?v={results[i]}"
 
     return results
 
