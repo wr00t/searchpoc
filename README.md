@@ -6,10 +6,25 @@ Why manually look for a PoC in the wild, wild web? This python script can query 
 
 ## Install
 
+### From the AUR
+
+```bash
+# Or whatever AUR helper
+paru -S searchpoc
+```
+
+### From Github
+
 ```bash
 git clone https://github.com/5amu/searchpoc
 cd searchpoc
 sudo mv searchpoc.py /usr/bin/searchpoc
+sudo chmod 755 /usr/bin/searchpoc
+
+# OR
+
+sudo wget "https://github.com/5amu/searchpoc/raw/v0.0.1/searchpoc.py" -O /usr/bin/searchpoc
+sudo chmod 755 /usr/bin/searchpoc
 ```
 
 ## Usage
