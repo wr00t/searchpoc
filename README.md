@@ -2,7 +2,7 @@
 
 ## Description
 
-Why manually look for a PoC in the wild, wild web? This python script can query github.com, youtube.com and cvebase.com to get as much PoCs as you can get. Enjoy!
+Why manually look for a PoC in the wild, wild web? This python script can query github.com, exploit-db.com, youtube.com and cvebase.com to get as much PoCs as you can get. Enjoy!
 
 ## Install
 
@@ -49,6 +49,6 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -f F, --file F        Newline separated cve list in file
-  -m {yt,gh,cb} [{yt,gh,cb} ...], --mode {yt,gh,cb} [{yt,gh,cb} ...]
+  -m {yt,gh,cb,ed} [{yt,gh,cb,ed} ...], --mode {yt,gh,cb} [{yt,gh,cb} ...]
                         Where should the program search? More parameters are allowed, default is all.
 ```
