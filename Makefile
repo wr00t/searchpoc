@@ -3,8 +3,8 @@
 PKGNAME := searchpoc
 
 BUILDDIR ?= bin
-VERSION  ?= 1.0.3
-RELEASE  ?= 3
+VERSION  ?= 1.0.4
+RELEASE  ?= 4
 
 build:
 	mkdir -p $(BUILDDIR)
