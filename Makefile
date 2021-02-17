@@ -3,17 +3,13 @@
 PKGNAME := searchpoc
 
 BUILDDIR ?= bin
-VERSION  ?= 1.0.5
-RELEASE  ?= 5
-
-build:
-	mkdir -p $(BUILDDIR)
-	cd $(BUILDDIR) && nuitka3 --follow-imports --show-progress --standalone ../${PKGNAME}.py
+VERSION  ?= 1.0.6
+RELEASE  ?= 6
 
 install:
-	install -Dm755 $(BUILDDIR)/${PKGNAME}.dist/${PKGNAME} $(DESTDIR)$(PREFIX)/bin/${PKGNAME}
+	install -Dm755 ${PKGNAME}.py $(DESTDIR)$(PREFIX)/bin/${PKGNAME}
 
-publish-aur: build
+publish-aur: clean
 	mkdir -p $(BUILDDIR)
 	git clone ssh://aur@aur.archlinux.org/${PKGNAME}.git $(BUILDDIR)/${PKGNAME}-aur
 	cp $(SCRIPTDIR)/PKGBUILD $(BUILDDIR)/${PKGNAME}-aur/PKGBUILD
