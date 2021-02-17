@@ -3,8 +3,8 @@
 PKGNAME := searchpoc
 
 BUILDDIR ?= bin
-VERSION  ?= 1.0.2
-RELEASE  ?= 2
+VERSION  ?= 1.0.3
+RELEASE  ?= 3
 
 build:
 	mkdir -p $(BUILDDIR)
@@ -28,8 +28,9 @@ version-bump:
 	sed -i "s/^VERSION.*/VERSION  ?= $(VERSION)/g" Makefile
 	sed -i "s/^RELEASE.*/RELEASE  ?= $(RELEASE)/g" Makefile
 	git add .
-	git tag $(VERSION)
 	git commit -m "Version bump: $(VERSION)"
+	git push
+	git tag $(VERSION)
 	git push --tags
 
 clean:
