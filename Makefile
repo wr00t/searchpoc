@@ -24,5 +24,12 @@ publish-aur: build
 	git --work-tree=$(BUILDDIR)/${PKGNAME}-aur --git-dir=$(BUILDDIR)/${PKGNAME}-aur/.git -c "user.email=$(AURMAIL)" -c "user.name=$(AURNAME)" commit -m "Bump to v$(VERSION)"
 	git --work-tree=$(BUILDDIR)/${PKGNAME}-aur --git-dir=$(BUILDDIR)/${PKGNAME}-aur/.git push
 
+version-bump:
+	sed -i "s/^VERSION.*/VERSION  ?= $(VERSION)/g" Makefile
+	git add .
+	git tag $(VERSION)
+	git commit -m "Version bump: $(VERSION)"
+	git push
+
 clean:
 	[ -d $(BUILDDIR) ] && rm -rf $(BUILDDIR)
