@@ -227,7 +227,7 @@ def main():
     
     if (not args.cve and not args.file) or (args.cve and args.file):
         parser.print_help()
-        exit(1)
+        return 1
 
     if args.file:
         with open(args.file, 'r') as cves:
@@ -246,7 +246,7 @@ def main():
             for poc in search_poc(args.cve, args.mode):
                 print(f"{color.RED}[+]{color.END} {poc}")
 
-    return
+    return 0
 
 #######################################################################
 
