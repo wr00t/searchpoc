@@ -10,8 +10,6 @@ Valerio Casalino <casalinovalerio.cv@gmail.com>
 LICENSE:
 Refer to the git repo.
 """
-# TODO:
-#       - Implement a search for exploitdb
 
 #######################################################################
 
@@ -42,6 +40,7 @@ class color:
 CVEBASE_URL = "https://raw.githubusercontent.com/cvebase/cvebase.com/main/cve/{}/{}/{}.md"
 GHAPI_QUERY = "https://api.github.com/search/repositories?q={}&page=1"
 YOUTUBE_URL = "https://youtube.com/results?search_query={}"
+EXPLODB_URL = "https://www.exploit-db.com/search?cve={}"
 
 #######################################################################
 
@@ -137,6 +136,32 @@ def search_github(cve):
 
     return to_return
 
+
+def search_exploitdb(cve):
+    
+    # https://www.exploit-db.com/search?cve=CVE-2021-3156
+    url = EXPLODB_URL.format(cve)
+    
+    # Connect, or skip if not HTTP 200
+    try:
+        request = urllib.request.Request(url)
+        request.add_header("x-requested-with", "XMLHttpRequest")
+        response = urllib.request.urlopen(request)
+    except urllib.error.HTTPError:
+        return []
+
+    edbresponse = json.loads(response.read().decode("utf-8"))
+
+    # Return if no result is shown
+    if edbresponse["data"] == 0: return []
+    
+    # From json extract links to repos
+    to_return = []
+    for item in edbresponse["data"]:
+        to_return.append("https://www.exploit-db.com/exploits/" + item["id"])
+
+    return to_return
+
 #######################################################################
 
 def banner():
@@ -149,11 +174,12 @@ def banner():
     print(f"{color.RED}             - by 5amu (github.com/5amu/searchpoc){color.END}\n")
 
 
-MODES = ['yt', 'gh', 'cb']
+MODES = ['yt', 'gh', 'cb', 'ed']
 MODES_TO_FUNC = {
     'yt' : search_youtube,
     'gh' : search_github,
-    'cb' : search_cvebase
+    'cb' : search_cvebase,
+    'ed' : search_exploitdb
 }
 
 # Parse arguments from command line
