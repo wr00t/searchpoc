@@ -16,7 +16,13 @@ paru -S searchpoc
 ### From the PPA
 
 ```bash
-# instructions are coming here
+# Add the ppa
+curl -s --compressed "https://ppa.casali.no/key.gpg" | sudo apt-key add -
+sudo curl -s --compressed -o /etc/apt/sources.list.d/5amu-debtools.list "https://ppa.casali.no/5amu-debtools.list"
+sudo apt update
+
+# Install the package
+sudo apt install searchpoc
 ```
 
 ### Using the script
