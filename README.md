@@ -13,18 +13,16 @@ Why manually look for a PoC in the wild, wild web? This python script can query 
 paru -S searchpoc
 ```
 
-### From Github
+### From the PPA
 
 ```bash
-git clone https://github.com/5amu/searchpoc
-cd searchpoc
-sudo mv searchpoc.py /usr/bin/searchpoc
-sudo chmod 755 /usr/bin/searchpoc
+# instructions are coming here
+```
 
-# OR
+### Using the script
 
-sudo wget "https://github.com/5amu/searchpoc/raw/v0.0.1/searchpoc.py" -O /usr/bin/searchpoc
-sudo chmod 755 /usr/bin/searchpoc
+```bash
+curl -sL https://raw.githubusercontent.com/5amu/searchpoc/master/publish/install.sh | sudo sh
 ```
 
 ## Usage

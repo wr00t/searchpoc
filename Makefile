@@ -2,25 +2,18 @@
 
 PKGNAME := searchpoc
 
-BUILDDIR ?= bin
+BUILDDIR ?= build
 VERSION  ?= 1.0.6
 RELEASE  ?= 6
 
 install:
 	install -Dm755 ${PKGNAME}.py $(DESTDIR)$(PREFIX)/bin/${PKGNAME}
 
-publish-aur: clean
-	mkdir -p $(BUILDDIR)
-	git clone ssh://aur@aur.archlinux.org/${PKGNAME}.git $(BUILDDIR)/${PKGNAME}-aur
-	cp $(SCRIPTDIR)/PKGBUILD $(BUILDDIR)/${PKGNAME}-aur/PKGBUILD
-	sed -i "s/<version>/$(VERSION)/g" $(BUILDDIR)/${PKGNAME}-aur/PKGBUILD
-	sed -i "s/<release>/$(RELEASE)/g" $(BUILDDIR)/${PKGNAME}-aur/PKGBUILD
-	cd $(BUILDDIR)/${PKGNAME}-aur && makepkg --printsrcinfo > .SRCINFO
-	git --work-tree=$(BUILDDIR)/${PKGNAME}-aur --git-dir=$(BUILDDIR)/${PKGNAME}-aur/.git add .
-	git --work-tree=$(BUILDDIR)/${PKGNAME}-aur --git-dir=$(BUILDDIR)/${PKGNAME}-aur/.git -c "user.email=$(AURMAIL)" -c "user.name=$(AURNAME)" commit -m "Bump to v$(VERSION)"
-	git --work-tree=$(BUILDDIR)/${PKGNAME}-aur --git-dir=$(BUILDDIR)/${PKGNAME}-aur/.git push
+publish: clean
+	find publish -type d -maxdepth 1 -exec make BUILDDIR=$(BUILDDIR) VERSION=$(VERSON) RELEASE=$(RELEASE) -C \{\} publish \;
 
 version-bump:
+	sed -i "s/^version.*/version=$(VERSION)/g" publish/install.sh
 	sed -i "s/^VERSION.*/VERSION  ?= $(VERSION)/g" Makefile
 	sed -i "s/^RELEASE.*/RELEASE  ?= $(RELEASE)/g" Makefile
 	git add .
@@ -31,3 +24,4 @@ version-bump:
 
 clean:
 	[ -d $(BUILDDIR) ] && rm -rf $(BUILDDIR)
+	find publish -type d -maxdepth 1 -exec make BUILDDIR=$(BUILDDIR) -C \{\} clean \; 
